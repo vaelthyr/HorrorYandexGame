@@ -173,7 +173,8 @@ namespace KinematicCharacterController
 
                 mover.Transform.SetPositionAndRotation(mover.TransientPosition, mover.TransientRotation);
                 mover.Rigidbody.position = mover.TransientPosition;
-                mover.Rigidbody.rotation = mover.TransientRotation;
+                Quaternion safeRotation = NormalizeRotationOrIdentity(mover.TransientRotation);
+                mover.Rigidbody.rotation = safeRotation;
             }
         }
 
@@ -289,6 +290,29 @@ namespace KinematicCharacterController
                 mover.LatestInterpolationPosition = newPos;
                 mover.LatestInterpolationRotation = newRot;
             }
+        }
+
+        private static Quaternion NormalizeRotationOrIdentity(Quaternion rotation)
+        {
+            float sqrMagnitude =
+                rotation.x * rotation.x +
+                rotation.y * rotation.y +
+                rotation.z * rotation.z +
+                rotation.w * rotation.w;
+
+            if (float.IsNaN(sqrMagnitude) || float.IsInfinity(sqrMagnitude) || sqrMagnitude < 1e-12f)
+            {
+                return Quaternion.identity;
+            }
+
+            float invMagnitude = 1f / Mathf.Sqrt(sqrMagnitude);
+
+            return new Quaternion(
+                rotation.x * invMagnitude,
+                rotation.y * invMagnitude,
+                rotation.z * invMagnitude,
+                rotation.w * invMagnitude
+            );
         }
     }
 }

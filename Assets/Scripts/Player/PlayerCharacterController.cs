@@ -427,11 +427,6 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                 if (inputs.Attack)
                 {
                     _isCanDance = false;
-                    _animatorController.isAttack = true;
-                }
-                else
-                {
-                    _animatorController.isAttack = false;
                 }
 
                 if (_isDance && !_isCanDance)

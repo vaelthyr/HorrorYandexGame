@@ -26,22 +26,34 @@ namespace BossBattle
 
         private void Awake()
         {
-            BeatManager.OnPulse += () =>
-            {
-                _bitCount += 1;
-                if (_bitCount % _shootAtBit == 0)
-                {
-                    if (_bombAttack)
-                    {
-                        ShootBomb();
-                    }
+            BeatManager.OnPulse += OnPulse;
+        }
 
-                    if (_pawAttack)
-                    {
-                        PawAttack();
-                    }
+        private void OnDisable()
+        {
+            BeatManager.OnPulse -= OnPulse;
+        }
+
+        private void OnDestroy()
+        {
+            BeatManager.OnPulse -= OnPulse;
+        }
+
+        private void OnPulse()
+        {
+            _bitCount += 1;
+            if (_bitCount % _shootAtBit == 0)
+            {
+                if (_bombAttack)
+                {
+                    ShootBomb();
                 }
-            };
+
+                if (_pawAttack)
+                {
+                    PawAttack();
+                }
+            }
         }
 
         private void ShootBomb()

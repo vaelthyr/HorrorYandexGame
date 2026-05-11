@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -8,6 +9,7 @@ using UnityEngine.AddressableAssets;
 
 public class LevelLoader : MonoSingleton<LevelLoader>
 {
+    private bool _uiInitialized;
 
     [Header("Loading UI")]
     [SerializeField] private Slider loadingBar;
@@ -23,8 +25,20 @@ public class LevelLoader : MonoSingleton<LevelLoader>
     public bool IsNextSceneLoaded => _isNextSceneLoaded;
     public bool IsSceneActive => _isSceneActive;
 
+    public override void Init()
+    {
+        InitializeLoadingUi();
+    }
+
+    private void Start()
+    {
+        InitializeLoadingUi();
+    }
+
     private async UniTask SetActiveLoadingUI(bool value)
     {
+        InitializeLoadingUi();
+
         if (_isTranslatedLoadScreen)
         {
             return;
@@ -68,7 +82,14 @@ public class LevelLoader : MonoSingleton<LevelLoader>
 
     public async UniTask LoadNewSceneAsync(string newBuildSceneName)
     {
-        await LoadProcess(SceneManager.GetSceneByName(newBuildSceneName).buildIndex);
+        int buildIndex = GetBuildIndexBySceneName(newBuildSceneName);
+        if (buildIndex < 0)
+        {
+            Debug.LogError($"LevelLoader could not find scene '{newBuildSceneName}' in Build Settings.");
+            return;
+        }
+
+        await LoadProcess(buildIndex);
     }
     
     public async UniTask LoadNewSceneAsync(int newBuildSceneIndex)
@@ -88,11 +109,21 @@ public class LevelLoader : MonoSingleton<LevelLoader>
             return;
         }
         _isSceneLoading = true;
-        await SetActiveLoadingUI(true);
-        MainAudioManager.instance.PauseMainSourceAudio();
+        if (_loadScreen != null && loadingBar != null)
+        {
+            await SetActiveLoadingUI(true);
+        }
+
+        if (MainAudioManager.instance != null)
+        {
+            MainAudioManager.instance.PauseMainSourceAudio();
+        }
         //await LoadAmbientAsync(AddressableManager.instance.AmbientData[buildIndex]);
         await LoadSceneAsync(buildIndex);
-        await SetActiveLoadingUI(false);
+        if (_loadScreen != null && loadingBar != null)
+        {
+            await SetActiveLoadingUI(false);
+        }
         _isSceneLoading = false;
     }
 
@@ -117,10 +148,52 @@ public class LevelLoader : MonoSingleton<LevelLoader>
                 asyncLoad.allowSceneActivation = true;
                 _isNextSceneLoaded = true;
             }
-            loadingBar.value = Mathf.Lerp(0.5f, 1, asyncLoad.progress / 0.9f);
+            if (loadingBar != null)
+            {
+                loadingBar.value = Mathf.Lerp(0.5f, 1, asyncLoad.progress / 0.9f);
+            }
             await UniTask.Yield(); 
         }
         
         _isSceneActive = true;
+    }
+
+    private int GetBuildIndexBySceneName(string sceneName)
+    {
+        for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+        {
+            string scenePath = SceneUtility.GetScenePathByBuildIndex(i);
+            string buildSceneName = System.IO.Path.GetFileNameWithoutExtension(scenePath);
+            if (string.Equals(buildSceneName, sceneName, StringComparison.Ordinal))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private void InitializeLoadingUi()
+    {
+        if (_uiInitialized)
+        {
+            return;
+        }
+
+        if (_loadScreen != null)
+        {
+            Color color = _loadScreen.color;
+            color.a = 0f;
+            _loadScreen.color = color;
+            _loadScreen.gameObject.SetActive(false);
+        }
+
+        if (loadingBar != null)
+        {
+            loadingBar.value = 0f;
+            loadingBar.gameObject.SetActive(false);
+        }
+
+        _uiInitialized = true;
     }
 }

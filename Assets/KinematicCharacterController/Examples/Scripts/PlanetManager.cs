@@ -30,14 +30,14 @@ namespace KinematicCharacterController.Examples
                 _teleporter.OnCharacterTeleport -= ControlGravity;
                 _teleporter.OnCharacterTeleport += ControlGravity;
             }
+
             foreach (Teleporter _teleporter in OnExitPlanetTeleportingZones)
             {
                 _teleporter.OnCharacterTeleport -= UnControlGravity;
                 _teleporter.OnCharacterTeleport += UnControlGravity;
             }
 
-
-            _lastRotation = PlanetMover.transform.rotation;
+            _lastRotation = SafeQuaternion(PlanetMover.transform.rotation, Quaternion.identity);
 
             PlanetMover.MoverController = this;
         }
@@ -46,15 +46,48 @@ namespace KinematicCharacterController.Examples
         {
             goalPosition = PlanetMover.Rigidbody.position;
 
-            // Rotate
-            Quaternion targetRotation = Quaternion.Euler(OrbitAxis * OrbitSpeed * deltaTime) * _lastRotation;
+            // Safety
+            if (deltaTime <= 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
+            {
+                goalRotation = SafeQuaternion(_lastRotation, PlanetMover.transform.rotation);
+                return;
+            }
+
+            Vector3 safeAxis = OrbitAxis;
+
+            if (
+                safeAxis.sqrMagnitude < 0.000001f ||
+                float.IsNaN(safeAxis.x) || float.IsNaN(safeAxis.y) || float.IsNaN(safeAxis.z) ||
+                float.IsInfinity(safeAxis.x) || float.IsInfinity(safeAxis.y) || float.IsInfinity(safeAxis.z)
+            )
+            {
+                safeAxis = Vector3.forward;
+            }
+
+            safeAxis.Normalize();
+
+            Quaternion deltaRotation = Quaternion.AngleAxis(OrbitSpeed * deltaTime, safeAxis);
+
+            Quaternion targetRotation = deltaRotation * _lastRotation;
+            targetRotation = SafeQuaternion(targetRotation, PlanetMover.transform.rotation);
+
             goalRotation = targetRotation;
             _lastRotation = targetRotation;
 
             // Apply gravity to characters
             foreach (PlayerCharacterController cc in _characterControllersOnPlanet)
             {
-                cc.Gravity =  (PlanetMover.transform.position - cc.transform.position).normalized * GravityStrength;
+                if (!cc)
+                {
+                    continue;
+                }
+
+                Vector3 gravityDirection = PlanetMover.transform.position - cc.transform.position;
+
+                if (gravityDirection.sqrMagnitude > 0.000001f)
+                {
+                    cc.Gravity = gravityDirection.normalized * GravityStrength;
+                }
             }
         }
 
@@ -88,6 +121,32 @@ namespace KinematicCharacterController.Examples
             {
                 UnControlGravity(cc);
             }
+        }
+        private Quaternion SafeQuaternion(Quaternion rotation, Quaternion fallback)
+        {
+            float sqrMagnitude =
+                rotation.x * rotation.x +
+                rotation.y * rotation.y +
+                rotation.z * rotation.z +
+                rotation.w * rotation.w;
+
+            if (
+                sqrMagnitude < 0.000001f ||
+                float.IsNaN(sqrMagnitude) ||
+                float.IsInfinity(sqrMagnitude)
+            )
+            {
+                return fallback;
+            }
+
+            float invMagnitude = 1f / Mathf.Sqrt(sqrMagnitude);
+
+            return new Quaternion(
+                rotation.x * invMagnitude,
+                rotation.y * invMagnitude,
+                rotation.z * invMagnitude,
+                rotation.w * invMagnitude
+            );
         }
     }
     

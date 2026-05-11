@@ -49,12 +49,14 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 0}
   m_RendererFeatures:
   - {fileID: -7181049588051017199}
-  - {fileID: 83075195475960637}
-  m_RendererFeatureMap: 1102c14d72c9579c3da3fd3b73242701
+  m_RendererFeatureMap: 1102c14d72c9579c
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
-  m_AssetVersion: 2
+  m_AssetVersion: 3
+  m_PrepassLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   m_OpaqueLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -106,12 +108,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _active: 1
   _shader: {fileID: 4800000, guid: 074eb04a5009453ea004483946e7c745, type: 3}
+  _material: {fileID: 0}
+  _isActive: 0
   _singleTape:
     enabled: 0
     value: 0
   _negative: 0
-  _glitch: {r: 1, g: 0, b: 0, a: 1}
+  _glitch:
+    r: 1
+    g: 0
+    b: 0
+    a: 1
   _frameRate: 20
   _tape: []
   _noise: []
   _shades: []
+  _clip: []
+  _playTime: 0
+  _yScanline: 0
+  _xScanline: 0

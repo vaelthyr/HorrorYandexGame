@@ -17,6 +17,16 @@ public class PulseToTheBeat : MonoBehaviour
         BeatManager.OnPulse += Pulse;
     }
 
+    private void OnDisable()
+    {
+        BeatManager.OnPulse -= Pulse;
+    }
+
+    private void OnDestroy()
+    {
+        BeatManager.OnPulse -= Pulse;
+    }
+
     private void Start()
     {
         _startSize = transform.localScale;
