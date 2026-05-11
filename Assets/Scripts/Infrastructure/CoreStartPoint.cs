@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -20,6 +19,12 @@ public class CoreStartPoint : MonoSingleton<CoreStartPoint>
         }
 
         activeCore = this;
+
+        if (transform.parent != null)
+        {
+            transform.SetParent(null);
+        }
+
         DontDestroyOnLoad(gameObject);
         LevelLoader = GetComponentInChildren<LevelLoader>();
 
@@ -32,6 +37,11 @@ public class CoreStartPoint : MonoSingleton<CoreStartPoint>
     private async void Start()
     {
         if (SceneManager.GetActiveScene().name != BootstrapSceneName)
+        {
+            return;
+        }
+
+        if (LevelLoader == null)
         {
             return;
         }
