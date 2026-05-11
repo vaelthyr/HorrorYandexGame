@@ -1,28 +1,26 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 public class TriggerColliderEvent : MonoBehaviour
 {
     [SerializeField] private string _triggerTag;
     [SerializeField] private string _newSceneName = "";
 
-    private void OnTriggerEnter(Collider _collider)
+    private async void OnTriggerEnter(Collider other)
     {
-        if (_collider.CompareTag(_triggerTag))
+        if (!other.CompareTag(_triggerTag))
         {
-            LevelController.instance.SetEnabledCharacterMovement(false);
-            
-            if (_newSceneName == "")
-            {
-                LevelLoader.instance.LoadNewSceneAsync();
-            }
-            else
-            {
-                LevelLoader.instance.LoadNewSceneAsync(_newSceneName);
-            }
+            return;
+        }
+
+        LevelController.instance?.SetEnabledCharacterMovement(false);
+
+        if (string.IsNullOrEmpty(_newSceneName))
+        {
+            await LevelLoader.instance.LoadNewSceneAsync();
+        }
+        else
+        {
+            await LevelLoader.instance.LoadNewSceneAsync(_newSceneName);
         }
     }
 }
