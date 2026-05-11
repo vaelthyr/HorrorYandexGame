@@ -5,30 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/CharacterPlaygroundKinematic.unity
-    guid: a867f9c5c8613d040a6c6cd82d9f2f10
   - enabled: 1
     path: Assets/Scenes/EntryPointBootstrap.unity
     guid: e658c45f7b0613a49b3febd475be7eaa
   - enabled: 1
     path: Assets/Scenes/MainMenu1.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
-  - enabled: 1
-    path: Assets/Scenes/Level start.unity
-    guid: 2076b813d4182794f973529459f5c4c4
-  - enabled: 1
-    path: Assets/Scenes/Level roblox obby.unity
-    guid: cf3f19900bded524ab1cc42d8a53684e
-  - enabled: 1
-    path: Assets/Scenes/Level_Boros.unity
-    guid: e95caa3d832815842973eeb1461d0e44
-  - enabled: 1
-    path: Assets/Scenes/Level islands.unity
-    guid: a65b262457cf308438f88712bfd11413
-  - enabled: 0
-    path: Assets/Scenes/Level extra.unity
-    guid: c5214dc1d11089b428e267f49062edba
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: fc38fb4b178d15a48b047961cbf53a2d,
       type: 2}
