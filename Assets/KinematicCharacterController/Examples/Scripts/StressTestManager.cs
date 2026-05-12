@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace KinematicCharacterController.Examples
@@ -31,14 +29,13 @@ namespace KinematicCharacterController.Examples
 
         private void Update()
         {
-
             KinematicCharacterSystem.Simulate(Time.deltaTime, KinematicCharacterSystem.CharacterMotors, KinematicCharacterSystem.PhysicsMovers);
         }
 
         private void UpdateOnImages()
         {
             RenderOn.enabled = Camera.cullingMask == -1;
-            SimOn.enabled = Physics.autoSimulation;
+            SimOn.enabled = Physics.simulationMode != SimulationMode.Script;
             InterpOn.enabled = KinematicCharacterSystem.Settings.Interpolate;
         }
 
@@ -52,7 +49,7 @@ namespace KinematicCharacterController.Examples
 
         public void ToggleRendering()
         {
-            if(Camera.cullingMask == -1)
+            if (Camera.cullingMask == -1)
             {
                 Camera.cullingMask = UIMask;
             }
@@ -65,7 +62,9 @@ namespace KinematicCharacterController.Examples
 
         public void TogglePhysicsSim()
         {
-            Physics.autoSimulation = !Physics.autoSimulation;
+            Physics.simulationMode = Physics.simulationMode == SimulationMode.Script
+                ? SimulationMode.FixedUpdate
+                : SimulationMode.Script;
             UpdateOnImages();
         }
 

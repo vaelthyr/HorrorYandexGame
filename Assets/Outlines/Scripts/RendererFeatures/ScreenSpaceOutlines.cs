@@ -1,9 +1,11 @@
-using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering;
+
+#pragma warning disable 0618
+#pragma warning disable 0672
 
 public class ScreenSpaceOutlines : ScriptableRendererFeature {
 
@@ -171,3 +173,6 @@ public class ScreenSpaceOutlines : ScriptableRendererFeature {
     }
 
 }
+
+#pragma warning restore 0672
+#pragma warning restore 0618

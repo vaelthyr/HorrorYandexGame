@@ -1,31 +1,48 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectPool<T> : MonoBehaviour where T : Component
+public class ObjectPool<T> where T : Component
 {
-    private Queue<T> pool = new Queue<T>();
-    private T prefab;
+    private readonly Queue<T> pool = new Queue<T>();
+    private readonly T prefab;
+    private readonly Transform parent;
 
-    public ObjectPool(T prefab, int initialSize = 10)
+    public ObjectPool(T prefab, int initialSize = 10, Transform parent = null)
     {
+        if (prefab == null)
+        {
+            Debug.LogError($"ObjectPool<{typeof(T).Name}> cannot be created with a null prefab.");
+            return;
+        }
+
         this.prefab = prefab;
+        this.parent = parent;
+
         for (int i = 0; i < initialSize; i++)
         {
             AddObjectToPool();
         }
     }
 
-    // Создаем объект и добавляем в пул
     private void AddObjectToPool()
     {
-        T obj = Object.Instantiate(prefab);
+        if (prefab == null)
+        {
+            return;
+        }
+
+        T obj = Object.Instantiate(prefab, parent);
         obj.gameObject.SetActive(false);
         pool.Enqueue(obj);
     }
 
-    // Получаем объект из пула
     public T GetObject()
     {
+        if (prefab == null)
+        {
+            return null;
+        }
+
         if (pool.Count == 0)
         {
             AddObjectToPool();
@@ -36,10 +53,15 @@ public class ObjectPool<T> : MonoBehaviour where T : Component
         return obj;
     }
 
-    // Возвращаем объект в пул
     public void ReturnObject(T obj)
     {
+        if (obj == null)
+        {
+            return;
+        }
+
         obj.gameObject.SetActive(false);
+        obj.transform.SetParent(parent, false);
         pool.Enqueue(obj);
     }
 }

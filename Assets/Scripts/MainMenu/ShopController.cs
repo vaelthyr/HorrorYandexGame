@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,20 +6,37 @@ public class ShopController : MonoBehaviour
     [SerializeField] private ShopCategory[] _categories;
     [SerializeField] private GameObject[] _categoriesButton;
     [SerializeField] private GameObject _categoriesContent;
-    [SerializeField] private List<ShopButton> _shopButtons;
-    private SkinType _currentSkinType;
-    public ShopButton prefab;
-    private ObjectPool<ShopButton> _shopButtonsPool;
+    [SerializeField] private List<ShopButton> _shopButtons = new List<ShopButton>();
+    [SerializeField] private ShopButton prefab;
 
+    private SkinType _currentSkinType;
+    private ObjectPool<ShopButton> _shopButtonsPool;
 
     private void Start()
     {
-        _shopButtonsPool = new ObjectPool<ShopButton>(prefab);
+        if (prefab == null)
+        {
+            Debug.LogError("ShopController has no ShopButton prefab assigned.", this);
+            return;
+        }
+
+        if (_categoriesContent == null)
+        {
+            Debug.LogError("ShopController has no categories content assigned.", this);
+            return;
+        }
+
+        _shopButtonsPool = new ObjectPool<ShopButton>(prefab, 10, _categoriesContent.transform);
         ModifyContent(0);
     }
 
     public void ModifyContent(int id)
     {
+        if (_shopButtonsPool == null)
+        {
+            return;
+        }
+
         SkinType typeCategory;
         switch (id)
         {
@@ -49,17 +64,19 @@ public class ShopController : MonoBehaviour
                 break;
         }
 
-
         if (_currentSkinType == typeCategory)
         {
             return;
         }
 
         _currentSkinType = typeCategory;
+
         foreach (ShopButton shopButton in _shopButtons)
         {
             _shopButtonsPool.ReturnObject(shopButton);
         }
+
+        _shopButtons.Clear();
 
         for (int i = 0; i < _categories.Length; i++)
         {
@@ -73,6 +90,11 @@ public class ShopController : MonoBehaviour
 
     private void SwitchCategory(SkinSO[] skins)
     {
+        if (skins == null)
+        {
+            return;
+        }
+
         for (int i = 0; i < skins.Length; i++)
         {
             SpawnButton(skins[i]);
@@ -82,7 +104,12 @@ public class ShopController : MonoBehaviour
     private void SpawnButton(SkinSO skin)
     {
         ShopButton button = _shopButtonsPool.GetObject();
-        button.transform.parent = _categoriesContent.transform;
+        if (button == null)
+        {
+            return;
+        }
+
+        button.transform.SetParent(_categoriesContent.transform, false);
         _shopButtons.Add(button);
         button.ChangeContent(skin);
     }

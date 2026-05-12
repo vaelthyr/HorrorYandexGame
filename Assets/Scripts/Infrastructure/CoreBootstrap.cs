@@ -1,3 +1,4 @@
+using IngameDebugConsole;
 using UnityEngine;
 
 public static class CoreBootstrap
@@ -19,6 +20,23 @@ public static class CoreBootstrap
             return;
         }
 
-        Object.Instantiate(corePrefab);
+        bool prefabWasActive = corePrefab.activeSelf;
+        corePrefab.SetActive(false);
+
+        GameObject core = Object.Instantiate(corePrefab);
+        corePrefab.SetActive(prefabWasActive);
+
+        core.transform.SetParent(null);
+        DetachPersistentChildren(core);
+        core.SetActive(true);
+    }
+
+    private static void DetachPersistentChildren(GameObject core)
+    {
+        DebugLogManager[] debugLogManagers = core.GetComponentsInChildren<DebugLogManager>(true);
+        foreach (DebugLogManager debugLogManager in debugLogManagers)
+        {
+            debugLogManager.transform.SetParent(null, false);
+        }
     }
 }
