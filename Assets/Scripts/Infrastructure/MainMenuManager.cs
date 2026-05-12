@@ -19,9 +19,6 @@ public class MainMenuManager : MonoBehaviour
 
     private void Awake()
     {
-        
-        
-        
         _skinsPanel.SetActive(false);
         _noValuePanel.SetActive(false);
         _donatePanel.SetActive(false);
