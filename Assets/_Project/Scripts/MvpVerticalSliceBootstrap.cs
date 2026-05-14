@@ -93,6 +93,12 @@ namespace AbsurdLiminalExpedition.Mvp
                 return;
             }
 
+            if (_inZone && !_failed && _playerRoot != null && _playerRoot.position.y < -12f)
+            {
+                OnPlayerFellOutOfWorld();
+                return;
+            }
+
             if (_inZone)
             {
                 AddDanger(-Time.deltaTime * 0.018f);
@@ -465,6 +471,12 @@ namespace AbsurdLiminalExpedition.Mvp
         private void BuildThreat()
         {
             GameObject threatObject = CreatePrimitive(PrimitiveType.Capsule, "MVP Entity - Corridor Listener", new Vector3(-20f, 1.1f, 18f), new Vector3(0.9f, 1.35f, 0.9f), _darkMaterial, _worldRoot);
+            Collider threatCollider = threatObject.GetComponent<Collider>();
+            if (threatCollider != null)
+            {
+                threatCollider.isTrigger = true;
+            }
+
             Light eye = CreateLight("Entity Eye", threatObject.transform.position + new Vector3(0f, 0.62f, 0.35f), new Color(1f, 0f, 0f), 0.8f, 4f);
             eye.transform.SetParent(threatObject.transform, true);
             _threat = threatObject.AddComponent<MvpThreat>();
@@ -500,6 +512,30 @@ namespace AbsurdLiminalExpedition.Mvp
 
             _audio.SetDanger(1f);
             _hud.SetStatus("You were caught by the Corridor Listener. Press R to restart BR-01.", 999f);
+        }
+
+        private void OnPlayerFellOutOfWorld()
+        {
+            if (_failed)
+            {
+                return;
+            }
+
+            _failed = true;
+            _player.SetMovementEnabled(false);
+
+            if (_zoneRule != null)
+            {
+                _zoneRule.StopRule();
+            }
+
+            if (_threat != null)
+            {
+                _threat.SetActiveThreat(false);
+            }
+
+            _audio.SetDanger(1f);
+            _hud.SetStatus("You fell out of BR-01. Press R to restart the procedure.", 999f);
         }
 
         private void RestartProcedure()
@@ -892,12 +928,16 @@ namespace AbsurdLiminalExpedition.Mvp
 
     public sealed class MvpThreat : MonoBehaviour
     {
+        private const float CatchDistance = 1.75f;
+
         private Transform _target;
         private MvpHud _hud;
         private Action _caught;
+        private Collider[] _threatColliders;
         private float _stunTimer;
         private Vector3 _externalVelocity;
         private bool _activeThreat;
+        private bool _hasCaught;
 
         public bool IsActiveThreat => _activeThreat;
 
@@ -906,24 +946,57 @@ namespace AbsurdLiminalExpedition.Mvp
             _target = target;
             _hud = hud;
             _caught = caught;
+            _threatColliders = GetComponentsInChildren<Collider>();
+
+            foreach (Collider threatCollider in _threatColliders)
+            {
+                threatCollider.isTrigger = true;
+
+                if (_target == null)
+                {
+                    continue;
+                }
+
+                foreach (Collider targetCollider in _target.GetComponentsInChildren<Collider>())
+                {
+                    Physics.IgnoreCollision(threatCollider, targetCollider, true);
+                }
+            }
         }
 
         public void SetActiveThreat(bool active)
         {
             _activeThreat = active;
+            _hasCaught = false;
             gameObject.SetActive(active);
         }
 
         public void Stun(float seconds, Vector3 pushVelocity)
         {
+            if (_hasCaught)
+            {
+                return;
+            }
+
             _stunTimer = Mathf.Max(_stunTimer, seconds);
             _externalVelocity = pushVelocity;
         }
 
         private void Update()
         {
-            if (!_activeThreat || _target == null)
+            if (!_activeThreat || _target == null || _hasCaught)
             {
+                return;
+            }
+
+            Vector3 targetPosition = _target.position;
+            Vector3 toTarget = targetPosition - transform.position;
+            toTarget.y = 0f;
+            float distance = toTarget.magnitude;
+
+            if (distance <= CatchDistance)
+            {
+                CatchTarget();
                 return;
             }
 
@@ -935,10 +1008,6 @@ namespace AbsurdLiminalExpedition.Mvp
                 return;
             }
 
-            Vector3 targetPosition = _target.position;
-            Vector3 toTarget = targetPosition - transform.position;
-            toTarget.y = 0f;
-            float distance = toTarget.magnitude;
             if (distance > 0.01f)
             {
                 Vector3 direction = toTarget / distance;
@@ -946,12 +1015,20 @@ namespace AbsurdLiminalExpedition.Mvp
                 transform.position += direction * speed * Time.deltaTime;
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction, Vector3.up), Time.deltaTime * 9f);
             }
+        }
 
-            if (distance <= 1.35f)
+        private void CatchTarget()
+        {
+            if (_hasCaught)
             {
-                _hud?.SetStatus("The Corridor Listener is touching your shadow.", 1.5f);
-                _caught?.Invoke();
+                return;
             }
+
+            _hasCaught = true;
+            _activeThreat = false;
+            _externalVelocity = Vector3.zero;
+            _hud?.SetStatus("The Corridor Listener caught you. Press R to restart BR-01.", 999f);
+            _caught?.Invoke();
         }
     }
 
